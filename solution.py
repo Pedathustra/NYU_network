@@ -46,5 +46,5 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     send_command(ssl_context, f'QUIT{endline}'.encode(), print_results) 
     
 if __name__ == '__main__':
-    # smtp_client(1025, '127.0.0.1')
-    smtp_client(587, 'smtp.gmail.com')
+    smtp_client(1025, '127.0.0.1')
+    #smtp_client(587, 'smtp.gmail.com')
