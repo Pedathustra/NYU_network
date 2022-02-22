@@ -4,6 +4,7 @@ from socket import *
 import ssl 
 import base64
 #  https://www.dev2qa.com/python-built-in-local-smtp-server-example/
+# python -m smtpd -c DebuggingServer -n 127.0.0.1:1025
 def send_command(client, message, print_results=False):
     client.send(message)
     recv = client.recv(1024).decode()
@@ -45,7 +46,7 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     send_command(context, f'RCPT TO: {mail_to}{endline}'.encode(), print_results)
     send_command(context, f'DATA{endline}'.encode(), print_results)  
     send_command(context, f'{msg}{endmsg}'.encode(), print_results) 
-    # send_command(context, f'.{endline}'.encode(), print_results) 
+    send_command(context, f'.{endline}'.encode(), print_results) 
     send_command(context, f'QUIT{endline}'.encode(), print_results) 
     
 if __name__ == '__main__':
