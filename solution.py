@@ -21,7 +21,6 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     # context_instance = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
     # username = base64.b64encode(config('EMAIL_FROM').encode('utf-8')) + endline.encode()
     # password = base64.b64encode(config('EMAIL_FROM_PASSWORD').encode('utf-8')) + endline.encode()
-    
     # mail_to = (os.getenv('EMAIL_TO') or 'bogus@yahoo.com')
     mail_to = 'bogus@yahoo.com'
     # print(mail_to)
@@ -41,8 +40,8 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     #     send_command(ssl_context, username, print_results)   
     #     send_command(ssl_context, password, print_results)   
 
-    send_command(context, f'MAIL FROM: <{username}>{endline}'.encode(), print_results)   
-    send_command(context, f'RCPT TO: <{mail_to}>{endline}'.encode(), print_results)
+    send_command(context, f'MAIL FROM: {username}{endline}'.encode(), print_results)   
+    send_command(context, f'RCPT TO: {mail_to}{endline}'.encode(), print_results)
     send_command(context, f'DATA{endline}'.encode(), print_results)  
     send_command(context, f'{msg}{endmsg}'.encode(), print_results) 
     # send_command(context, f'.{endline}'.encode(), print_results) 
