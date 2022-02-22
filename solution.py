@@ -3,7 +3,7 @@ from socket import *
 # import os 
 import ssl 
 import base64
- 
+#  https://www.dev2qa.com/python-built-in-local-smtp-server-example/
 def send_command(client, message, print_results=False):
     client.send(message)
     recv = client.recv(1024).decode()
@@ -22,7 +22,8 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     # username = base64.b64encode(config('EMAIL_FROM').encode('utf-8')) + endline.encode()
     # password = base64.b64encode(config('EMAIL_FROM_PASSWORD').encode('utf-8')) + endline.encode()
     # mail_to = (os.getenv('EMAIL_TO') or 'bogus@yahoo.com')
-    mail_to = 'bogus@yahoo.com'
+    mail_to = 'bogus@gmail.com'
+    username = 'bogus@gmail.com'
     # print(mail_to)
     client_socket = socket(AF_INET, SOCK_STREAM)
     client_socket.connect((mailserver, port))
@@ -39,7 +40,7 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     #     send_command(ssl_context, f'AUTH LOGIN{endline}'.encode(), print_results)   
     #     send_command(ssl_context, username, print_results)   
     #     send_command(ssl_context, password, print_results)   
-
+    #use <> for gmail
     send_command(context, f'MAIL FROM: {username}{endline}'.encode(), print_results)   
     send_command(context, f'RCPT TO: {mail_to}{endline}'.encode(), print_results)
     send_command(context, f'DATA{endline}'.encode(), print_results)  
