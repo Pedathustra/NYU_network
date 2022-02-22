@@ -14,7 +14,7 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     msg = "\r\n My message"
     endmsg = "\r\n.\r\n"
     endline = '\r\n'
-    print_results = True
+    print_results = False
     is_local = True if mailserver == '127.0.0.1' else False
 
     context_instance = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
