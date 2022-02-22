@@ -1,5 +1,6 @@
 from socket import *
-from decouple import config
+# from decouple import config
+# import os 
 import ssl 
 import base64
  
@@ -18,11 +19,12 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     is_local = True if mailserver == '127.0.0.1' else False
 
     context_instance = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
-    username = base64.b64encode(config('EMAIL_FROM').encode('utf-8')) + endline.encode()
-    password = base64.b64encode(config('EMAIL_FROM_PASSWORD').encode('utf-8')) + endline.encode()
+    # username = base64.b64encode(config('EMAIL_FROM').encode('utf-8')) + endline.encode()
+    # password = base64.b64encode(config('EMAIL_FROM_PASSWORD').encode('utf-8')) + endline.encode()
     
-    mail_to = (config('EMAIL_TO') or 'bogus@yahoo.com')
-
+    # mail_to = (os.getenv('EMAIL_TO') or 'bogus@yahoo.com')
+    mail_to = 'bogus@yahoo.com'
+    # print(mail_to)
     client_socket = socket(AF_INET, SOCK_STREAM)
     client_socket.connect((mailserver, port))
     recv = client_socket.recv(1024).decode()
@@ -33,10 +35,10 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     ssl_context = context_instance.wrap_socket(client_socket)
     context = client_socket if is_local else ssl_context 
 
-    if not is_local:
-        send_command(ssl_context, f'AUTH LOGIN{endline}'.encode(), print_results)   
-        send_command(ssl_context, username, print_results)   
-        send_command(ssl_context, password, print_results)   
+    # if not is_local:
+    #     send_command(ssl_context, f'AUTH LOGIN{endline}'.encode(), print_results)   
+    #     send_command(ssl_context, username, print_results)   
+    #     send_command(ssl_context, password, print_results)   
 
     send_command(ssl_context, f'MAIL FROM: <{username}>{endline}'.encode(), print_results)   
     send_command(ssl_context, f'RCPT TO: <{mail_to}>{endline}'.encode(), print_results)
