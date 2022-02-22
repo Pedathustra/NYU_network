@@ -16,9 +16,9 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     endmsg = "\r\n.\r\n"
     endline = '\r\n'
     print_results = False
-    is_local = True if mailserver == '127.0.0.1' else False
+    # is_local = True if mailserver == '127.0.0.1' else False
 
-    context_instance = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
+    # context_instance = ssl.SSLContext(protocol=ssl.PROTOCOL_TLSv1_2)
     # username = base64.b64encode(config('EMAIL_FROM').encode('utf-8')) + endline.encode()
     # password = base64.b64encode(config('EMAIL_FROM_PASSWORD').encode('utf-8')) + endline.encode()
     
@@ -32,8 +32,9 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     send_command(client_socket, f'HELO Alice{endline}'.encode(), print_results)
     send_command(client_socket, f'STARTTLS{endline}'.encode(), print_results)   
     
-    ssl_context = context_instance.wrap_socket(client_socket)
-    context = client_socket if is_local else ssl_context 
+    # ssl_context = context_instance.wrap_socket(client_socket)
+    # context = client_socket if is_local else ssl_context 
+    context = client_socket
 
     # if not is_local:
     #     send_command(ssl_context, f'AUTH LOGIN{endline}'.encode(), print_results)   
