@@ -40,12 +40,12 @@ def smtp_client(port=1025, mailserver='127.0.0.1'):
     #     send_command(ssl_context, username, print_results)   
     #     send_command(ssl_context, password, print_results)   
 
-    send_command(ssl_context, f'MAIL FROM: <{username}>{endline}'.encode(), print_results)   
-    send_command(ssl_context, f'RCPT TO: <{mail_to}>{endline}'.encode(), print_results)
-    send_command(ssl_context, f'DATA{endline}'.encode(), print_results)  
-    send_command(ssl_context, f'{msg}{endmsg}'.encode(), print_results) 
-    # send_command(ssl_context, f'.{endline}'.encode(), print_results) 
-    send_command(ssl_context, f'QUIT{endline}'.encode(), print_results) 
+    send_command(context, f'MAIL FROM: <{username}>{endline}'.encode(), print_results)   
+    send_command(context, f'RCPT TO: <{mail_to}>{endline}'.encode(), print_results)
+    send_command(context, f'DATA{endline}'.encode(), print_results)  
+    send_command(context, f'{msg}{endmsg}'.encode(), print_results) 
+    # send_command(context, f'.{endline}'.encode(), print_results) 
+    send_command(context, f'QUIT{endline}'.encode(), print_results) 
     
 if __name__ == '__main__':
     smtp_client(1025, '127.0.0.1')
