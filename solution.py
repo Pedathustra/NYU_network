@@ -1,10 +1,12 @@
 from socket import *
+import socket as sock
 import os
 import sys
 import struct
 import time
 import select
 import binascii
+import statistics
 # Should use stdev
 
 ICMP_ECHO_REQUEST = 8
@@ -32,14 +34,10 @@ def checksum(string):
     answer = answer >> 8 | (answer << 8 & 0xff00)
     return answer
 
-def format_ip(ip_in_bytes):
-    return '.'.join(map(str, ip_in_bytes))
-def print_name_value(item_name, item_value):
-    print(f'{item_name}: {item_value}\n\r')
 
 def receiveOnePing(mySocket, ID, timeout, destAddr):
     timeLeft = timeout
-
+    time_sent = time.time() # it's the same here as if created in sendOnePing. Leaving it here so I don't have to adjust function signatures
     while 1:
         startedSelect = time.time()
         whatReady = select.select([mySocket], [], [], timeLeft)
@@ -49,49 +47,15 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
 
         timeReceived = time.time()
         recPacket, addr = mySocket.recvfrom(1024)
-    # Fill in start
-    #     0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    #   0 |Version|  IHL  |Type of Service|          Total Length         |
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    #   4 |         Identification        |Flags|      Fragment Offset    |
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    #   8 |  Time to Live |    Protocol   |         Header Checksum       |
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    #   12|                       Source Address                          |
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    #   16 |                    Destination Address                        |
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    #   20 |                    Options                    |    Padding    |
-    #    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    # https://docs.python.org/3/library/struct.html
-    # https://gist.github.com/pklaus/856268/b7194182270c816dee69438b54e42116ab31e53b
-        
-        # ah ha! Example that works with src, and destination ips
-        # source_ip, dest_ip = struct.unpack("! 4s 4s", recPacket[12:20])
-        # print(format_ip(source_ip), format_ip(dest_ip))
+        # Fill in start
+ 
+        recp_icmp_type, recp_icmp_code, recp_icmp_checksum, recp_icmp_id, recp_icmp_seqno = struct.unpack("! b b H H h", recPacket[20:28]) #(1)(1)(2)(2)(2)
+        # sent_icmp_type, sent_icmp_code, sent_icmp_checksum, sent_icmp_id, sent_icmp_seqno = struct.unpack("! b b H H h", recPacket[20:28]) #(1)(1)(2)(2)(2)
+        recp_be_icmp_id = sock.ntohs(recp_icmp_id)
 
-        # Fetch the ICMP header from the IP packet: 
-        # best description
-        # https://book.huihoo.com/iptables-tutorial/x1078.htm
-        # https://stackoverflow.com/questions/27094637/icmp-pinger-application-in-python-error-operation-not-permitted
-        # checksum, sequence number, time to live (TTL), etc
-        # https://pythontic.com/modules/socket/byteordering-coversion-functions
-        # do i need to know which one and convert? based on os? 
-        # Type (1) | Code (1)| Checksum (2) || identifier (2 ) | seqno ( 2  )
-        #icmp_type, icmp_code, icmp_checksum, icmp_id, icmp_seqno = struct.unpack("! b b H H H", recPacket[20:28]) #(1)(1)(2)(2)(2) #?
-        icmp_type, icmp_code, icmp_checksum, icmp_id, icmp_seqno = struct.unpack("! b b H H h", recPacket[20:28]) #(1)(1)(2)(2)(2)
-      
-        print("-------------")
-        print_name_value("icmp_type: ", icmp_type)
-        print_name_value("icmp_code: ", icmp_code)
-        print_name_value("icmp_checksum: ", icmp_checksum)
-        print_name_value("icmp_id (seems to be BE): ", icmp_id)
-        print_name_value("Orig ID (Seems to be LE): ", ID)
-        print_name_value("icmp_seqno: ", icmp_seqno)
+        if ID == recp_icmp_id or ID == recp_be_icmp_id: # not full proof. Still a remote chance this could have a false positive. 
+            return timeReceived - time_sent 
 
-        if ID == icmp_id:
-            return timeReceived - time_sent
         # Fill in end
         timeLeft = timeLeft - howLongInSelect
         if timeLeft <= 0:
@@ -120,9 +84,8 @@ def sendOnePing(mySocket, destAddr, ID):
  
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, ID, 1)
     packet = header + data
- 
     mySocket.sendto(packet, (destAddr, 1))  # AF_INET address must be tuple, not str
-
+    return 
 
     # Both LISTS and TUPLES consist of a number of objects
     # which can be referenced by their position number within the object.
@@ -143,21 +106,35 @@ def doOnePing(destAddr, timeout):
 
 
 def ping(host, timeout=1):
-    # timeout=1 means: If one second goes by without a reply from the server,  	# the client assumes that either the client's ping or the server's pong is lost
+    # timeout=1 means: If one second goes by without a reply from the server,  	
+    # # the client assumes that either the client's ping or the server's pong is lost
     dest = gethostbyname(host)
     print("Pinging " + dest + " using Python:")
     print("")
     # Calculate vars values and return them
     #  vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(stdev(stdev_var), 2))]
     # Send ping requests to a server separated by approximately one second
-    for i in range(0,4):
+    delay_values = []
+    packet_min = 0
+    packet_max = 0
+    packet_sum = 0
+    top_range = 4
+    for i in range(0,top_range):
         delay = doOnePing(dest, timeout)
-        print(delay)
+        print(delay, packet_max)
+        if delay > packet_max:
+            packet_max = delay
+        if delay < packet_min:
+            packet_min = delay
+        packet_sum += delay
+        delay_values.append(delay)
         time.sleep(1)  # one second
-
+    packet_avg = packet_sum / top_range
+    packet_std_dev = statistics.stdev(delay_values)
+    vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(packet_std_dev, 2))]
     return vars
 
 if __name__ == '__main__':
-    #ping("google.co.il")
-    ping("www.google.com")
-    #ping("127.0.0.1")
+    resp = ping("google.co.il")
+    print(resp)
+    
