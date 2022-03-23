@@ -53,7 +53,8 @@ def receiveOnePing(mySocket, ID, timeout, destAddr):
         # sent_icmp_type, sent_icmp_code, sent_icmp_checksum, sent_icmp_id, sent_icmp_seqno = struct.unpack("! b b H H h", recPacket[20:28]) #(1)(1)(2)(2)(2)
         recp_be_icmp_id = sock.ntohs(recp_icmp_id)
 
-        if ID == recp_icmp_id or ID == recp_be_icmp_id: # not full proof. Still a remote chance this could have a false positive. 
+        #todo: add seqno
+        if ID == recp_icmp_id or ID == recp_be_icmp_id:  # not full proof. Still a remote chance this could have a false positive. 
             return timeReceived - time_sent 
 
         # Fill in end
@@ -121,20 +122,24 @@ def ping(host, timeout=1):
     top_range = 4
     for i in range(0,top_range):
         delay = doOnePing(dest, timeout)
-        print(delay, packet_max)
         if delay > packet_max:
             packet_max = delay
-        if delay < packet_min:
+        if delay < packet_min or packet_min == 0:
             packet_min = delay
         packet_sum += delay
         delay_values.append(delay)
         time.sleep(1)  # one second
     packet_avg = packet_sum / top_range
     packet_std_dev = statistics.stdev(delay_values)
-    vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(packet_std_dev, 2))]
+    # vars = [str(round(packet_min, 2)), str(round(packet_avg, 2)), str(round(packet_max, 2)),str(round(packet_std_dev, 2))]
+    vars = [str(packet_min), str(packet_avg), str(packet_max),str(packet_std_dev)]
     return vars
 
 if __name__ == '__main__':
     resp = ping("google.co.il")
-    print(resp)
+    print(resp[0])
+    print(resp[1])
+    print(resp[2])
+    print(resp[3])
+    
     
