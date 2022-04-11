@@ -39,18 +39,7 @@ def checksum(string):
     return answer
 
 def build_packet():
-    #Fill in start
 
-    # Header is type (8), code (8), checksum (16), id (16), sequence (16)
-    
-    # Make a dummy header with a 0 checksum
-    # struct -- Interpret strings as packed binary data
-    # In the sendOnePing() method of the ICMP Ping exercise ,firstly the header of our
-    # packet to be sent was made, secondly the checksum was appended to the header and
-    # then finally the complete packet was sent to the destination.
-    # Make the header in a similar way to the ping exercise.
-    # Append checksum to the header.
-    ##--> poached the following from pinger.sendOnePing 
     myChecksum = 0
     my_id = os.getpid() & 0xFFFF
     header = struct.pack("bbHHh", ICMP_ECHO_REQUEST, 0, myChecksum, my_id, 1)
@@ -70,7 +59,7 @@ def get_route(hostname):
     timeLeft = TIMEOUT
     tracelist1 = [] #This is your list to use when iterating through each trace 
     tracelist2 = [] #This is your list to contain all traces
- 
+    a = 1
     for ttl in range(1,MAX_HOPS):
         for tries in range(TRIES):
             destAddr = gethostbyname(hostname)
@@ -105,7 +94,7 @@ def get_route(hostname):
                 types, recp_icmp_code, recp_icmp_checksum, recp_icmp_id, recp_icmp_seqno = struct.unpack("! b b H H h", recvPacket[20:28]) #(1)(1)(2)(2)(2)
                 recp_ttl, recp_protocol, recp_ip_checksum, recp_src, rec_dest = struct.unpack("! B B H 4s 4s", recvPacket[8:20]) 
                 hop_source_ip = str(ipaddress.IPv4Address(recp_src))
-                tracelist1.append(ttl)
+                tracelist1.append(str(ttl))
                 try:
                     (hop_hostname, ar, hop_ip) = gethostbyaddr(hop_source_ip)
                 except herror:
@@ -113,21 +102,20 @@ def get_route(hostname):
                 if types == 11:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0] 
-                    
                     time_elapsed = math.ceil((timeReceived-t) * 1000)
                     tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
                 elif types == 3: # Destination Unreachable.
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    tracelist1.append('* * * Destination Unreachable')
+                    time_elapsed = math.ceil((timeReceived-t) * 1000)
+                    tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
+                    # tracelist1.append('Destination Unreachable')
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     time_elapsed = math.ceil((timeReceived-timeSent) * 1000)
                     if (hop_source_ip == destAddr):
                         tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
-                        mySocket.close()
-                        tracelist2.append(tracelist1)
                         return tracelist2
                 else:
                     #Fill in start
@@ -141,7 +129,7 @@ def get_route(hostname):
                 mySocket.close()
     return tracelist2
 if __name__ == '__main__':
-    # get_route("google.co.il")
-    print(get_route("yahoo.com"))
+    print(get_route("google.co.il"))
+    #print(get_route("yahoo.com"))
     
     
