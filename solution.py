@@ -5,7 +5,8 @@ import struct
 import time
 import select
 import binascii
-
+import ipaddress
+import math
 ICMP_ECHO_REQUEST = 8
 MAX_HOPS = 30
 TIMEOUT = 2.0
@@ -98,50 +99,49 @@ def get_route(hostname):
                 
             else:
                 #Fill in start
+                # https://docs.python.org/3/library/ipaddress.html
+                # https://docs.python.org/3/library/struct.html
+                hop_hostname = ''
                 types, recp_icmp_code, recp_icmp_checksum, recp_icmp_id, recp_icmp_seqno = struct.unpack("! b b H H h", recvPacket[20:28]) #(1)(1)(2)(2)(2)
-                recp_src, rec_dest = struct.unpack("! 4s 4s", recvPacket[12:20]) 
-                print(types, recp_icmp_code, recp_icmp_checksum, recp_icmp_id, recp_icmp_seqno)
-                print(unpack(recp_src), rec_dest)
-                
-                #Fetch the icmp type from the IP packet
-                #Fill in end
-                try: #try to fetch the hostname
-                    #Fill in start
-                    pass
-                    #Fill in end
-                except herror:   #if the host does not provide a hostname
-                    #Fill in start
-                    pass
-                    #Fill in end
-
+                recp_ttl, recp_protocol, recp_ip_checksum, recp_src, rec_dest = struct.unpack("! B B H 4s 4s", recvPacket[8:20]) 
+                hop_source_ip = str(ipaddress.IPv4Address(recp_src))
+                tracelist1.append(ttl)
+                try:
+                    (hop_hostname, ar, hop_ip) = gethostbyaddr(hop_source_ip)
+                except herror:
+                    hop_hostname = 'hostname not returnable'
                 if types == 11:
                     bytes = struct.calcsize("d")
-                    timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    #Fill in start
-                    #You should add your responses to your lists here
-                    #Fill in end
-                elif types == 3:
+                    timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0] 
+                    
+                    time_elapsed = math.ceil((timeReceived-t) * 1000)
+                    tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
+                elif types == 3: # Destination Unreachable.
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    #Fill in start
-                    #You should add your responses to your lists here 
-                    #Fill in end
+                    tracelist1.append('* * * Destination Unreachable')
                 elif types == 0:
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                    #Fill in start
-                    #You should add your responses to your lists here and return your list if your destination IP is met
-                    #Fill in end
+                    time_elapsed = math.ceil((timeReceived-timeSent) * 1000)
+                    if (hop_source_ip == destAddr):
+                        tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
+                        mySocket.close()
+                        tracelist2.append(tracelist1)
+                        return tracelist2
                 else:
                     #Fill in start
-                    pass
+                    tracelist1.append('ICMP Error ')
                     #If there is an exception/error to your if statements, you should append that to your list here
                     #Fill in end
                 break
             finally:
+                tracelist2.append(tracelist1)
+                tracelist1 = []
                 mySocket.close()
     return tracelist2
 if __name__ == '__main__':
-    print('result', get_route("google.co.il"))
+    # get_route("google.co.il")
+    print(get_route("yahoo.com"))
     
     
