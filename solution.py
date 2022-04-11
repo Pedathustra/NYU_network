@@ -114,8 +114,8 @@ def get_route(hostname):
                     bytes = struct.calcsize("d")
                     timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
                     time_elapsed = math.ceil((timeReceived-timeSent) * 1000)
+                    tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
                     if (hop_source_ip == destAddr):
-                        tracelist1.extend([f'{time_elapsed}ms', hop_source_ip, hop_hostname])
                         return tracelist2
                 else:
                     #Fill in start
